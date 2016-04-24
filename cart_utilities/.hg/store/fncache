@@ -1,0 +1,17 @@
+data/artio_mpi.h.i
+data/artio_posix.c.i
+data/artio_endian.c.i
+data/artio_endian.h.i
+data/artio_selector.c.i
+data/artio_internal.h.i
+data/.hgtags.i
+data/artio_mpi.c.i
+data/artio_grid.c.i
+data/artio_sfc.h.i
+data/artio.c.i
+data/artio.h.i
+data/artio_sfc.c.i
+data/LICENSE.i
+data/artio_particle.c.i
+data/artio_parameter.c.i
+data/artio_file.c.i
