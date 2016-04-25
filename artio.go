@@ -337,14 +337,21 @@ func (handle Fileset) CloseParticles() error {
 func (handle Fileset) ParticleReadRootCellBegin(
 	sfc int64, speciesCounts []int64,
 ) error {
-	intSpeciesCounts := make([]int, len(speciesCounts))
-	for i := range speciesCounts { intSpeciesCounts[i] = int(speciesCounts[i]) }
-	ptrSpeciesCounts := (*C.int)(unsafe.Pointer(&intSpeciesCounts[0]))
-
+	numSpeciesBuf := make([]int32, len(speciesCounts))
+	for i := range numSpeciesBuf {
+		numSpeciesBuf[i] = int32(speciesCounts[i])
+	}
+	ptrSpeciesCounts := (*C.int)(unsafe.Pointer(&numSpeciesBuf[0]))
+	fmt.Println(speciesCounts)
+	fmt.Println(numSpeciesBuf)
+	println(&numSpeciesBuf)
+	fmt.Println(ptrSpeciesCounts)
+	
 	err := ErrorCode(C.artio_particle_read_root_cell_begin(
-			handle.ptr, C.int64_t(sfc), ptrSpeciesCounts,
+		handle.ptr, C.int64_t(sfc), ptrSpeciesCounts,
 	))
-
+	fmt.Println(numSpeciesBuf, ptrSpeciesCounts)
+	
 	if err != Success {
 		return fmt.Errorf(
 			"Could not read ARTIO particle sfc %d. ErrorCode = %d",
@@ -373,7 +380,8 @@ func (handle Fileset) ParticleReadSpeciesBegin(species int) error {
 
 	if err != Success {
 		return fmt.Errorf(
-			"Could not begin to read particle species %d.", species,
+			"Could not begin to read particle species %d. ErrorCode: %d",
+			species, err,
 		)
 	}
 
