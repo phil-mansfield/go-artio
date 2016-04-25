@@ -296,7 +296,7 @@ func (handle Fileset) ParticleCacheSfcRange(start, end int64) error {
 
 	if err != Success {
 		return fmt.Errorf(
-			"Could cache ARTIO sfc range (%d, %d). ErrorCode = %d",
+			"Could not cache ARTIO sfc range (%d, %d). ErrorCode = %d",
 			start, end, err,
 		)
 	} else {
@@ -313,3 +313,4 @@ func (handle Fileset) ParticleClearSfcCache() error {
 	}
 	return nil
 }
+
