@@ -73,6 +73,13 @@ const (
 	ErrVersionMismatch ErrorCode = 500 + iota
 )
 
+type OpenType int
+const (
+	OpenHeader OpenType = iota
+	OpenParticles
+	OpenGrid
+)
+
 type ParameterType int
 const (
 	String ParameterType = iota
@@ -96,7 +103,7 @@ type Fileset struct { ptr *C.artio_fileset }
 func (c Fileset) IsNull() bool { return c.ptr == (*C.artio_fileset)(nil) }
 var NullFileset = Fileset{ (*C.artio_fileset)(nil) }
 
-func FilesetOpen(prefix string, flag int, context Context) (Fileset, error)  {
+func FilesetOpen(prefix string, flag OpenType, context Context) (Fileset, error)  {
 	cStr := C.CString(prefix)
 	defer C.free(unsafe.Pointer(cStr))
 
@@ -394,7 +401,7 @@ func (handle Fileset) ReadParticle(
 	ptrID := (*C.int64_t)(unsafe.Pointer(&id))
 	ptrSubspecies := (*C.int)(unsafe.Pointer(&subspecies))
 	ptrPrimary := (*C.double)(unsafe.Pointer(&primary[0]))
-	
+
 	dummySecondary := float32(0)
 	ptrSecondary := (*C.float)(unsafe.Pointer(&dummySecondary))
 	if len(secondary) > 0 {
