@@ -9,7 +9,7 @@ import (
 	artio "github.com/phil-mansfield/go-artio"
 )
 
-
+// TODO: Move this into artio.go
 func getIntOrLong(h artio.Fileset, key artio.Key) []int64 {
 	if key.Type == artio.Int {
 		out32 := h.GetInt(key)
@@ -33,7 +33,17 @@ func PrintFirstN(prefix string, n int) error {
 		speciesNumKey = h.Key("num_particles_per_species")
 	}
 	counts := getIntOrLong(h, speciesNumKey)
-	fmt.Println(counts)
+	masses := h.GetFloat(h.Key("particle_species_mass"))
+
+	speciesIndices := make([]int64, len(counts) + 1)
+	for i := range counts {
+		speciesIndices[i+1] = speciesIndices[i] + counts[i]
+	}
+
+	h.ParticleCacheSfcRange(0, speciesIndices[0] - 1)
+	defer h.ParticleClearSfcCache()
+
+	fmt.Println(counts, masses)
 
 	return nil
 }

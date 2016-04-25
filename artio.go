@@ -114,7 +114,7 @@ func FilesetOpen(prefix string, flag int, context Context) (Fileset, error)  {
 func (handle Fileset) Close() error {
 	err := ErrorCode(C.artio_fileset_close(handle.ptr))
 	if err != Success {
-		return fmt.Errorf("FilesetClose error: %d", err)
+		return fmt.Errorf("Could not close ARTIO fileset. ErrorCode:: %d", err)
 	}
 	return nil
 }
@@ -287,4 +287,29 @@ func (handle Fileset) GetLong(key Key) []int64 {
 	} else {
 		return values
 	}
+}
+
+func (handle Fileset) ParticleCacheSfcRange(start, end int64) error {
+	err := ErrorCode(C.artio_particle_cache_sfc_range(
+		handle.ptr, C.int64_t(start), C.int64_t(end),
+	))
+
+	if err != Success {
+		return fmt.Errorf(
+			"Could cache ARTIO sfc range (%d, %d). ErrorCode = %d",
+			start, end, err,
+		)
+	} else {
+		return nil
+	}
+}
+
+func (handle Fileset) ParticleClearSfcCache() error {
+	err := ErrorCode(C.artio_particle_clear_sfc_cache(handle.ptr))
+	if err != Success {
+		return fmt.Errorf(
+			"Could not clear ARTIO particle cache. ErrorCode = %d", err,
+		)
+	}
+	return nil
 }
