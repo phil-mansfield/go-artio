@@ -1,48 +1,33 @@
 package main
 
-/*
-#cgo CFLAGS: -O2 -g
-#cgo LDFLAGS: -lm
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <limits.h>
-#include "artio.h"
-*/
-import "C"
-
 import (
 	"fmt"
+	"log"
 	"os"
 
-	"unsafe"
+	artio "github.com/phil-mansfield/go-artio"
 )
 
-type Context struct { ptr *C.artio_context }
-type Fileset struct { ptr *C.artio_fileset }
+func PrintHeader(prefix string) error {
+	handle, err := artio.FilesetOpen(prefix, 0, artio.NullContext)
+	if err != nil { return err }
 
-func FilesetOpen(prefix string, flag int) (Fileset, error)  {
-	cStr := C.CString(prefix)
-	defer C.free(unsafe.Pointer(cStr))
+	for key, pType, n, res := artio.ParameterIterate(handle);
+		res == artio.Success;
+		key, pType, n, res = artio.ParameterIterate(handle) {
 
-	fileset := Fileset{
-		C.artio_fileset_open(cStr, C.int(flag), (*C.artio_context)(nil)),
+		fmt.Println(key, pType, n)
 	}
 
-	if fileset.ptr == (*C.artio_fileset)(nil) {
-		return fileset, fmt.Errorf("Prefix %s does not exist", prefix)
-	} else {
-		return fileset, nil
-	}
-}
-
-func PrintHeader(prefix string) {
-	_, err := FilesetOpen(prefix, 0)
-
-	if err != nil { fmt.Println(err.Error()) }
-	fmt.Println("File exists.")
+	return nil
 }
 
 func main() {
-	PrintHeader(os.Args[1])
+	if len(os.Args) != 1 {
+		fmt.Println("Usage: ./print_header fileset_prefix")
+	}
+
+	if err := PrintHeader(os.Args[1]); err != nil {
+		log.Fatal(err.Error())
+	}
 }
