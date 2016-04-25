@@ -12,6 +12,7 @@ package artio
 import "C"
 
 import (
+	"bytes"
 	"fmt"
 
 	"unsafe"
@@ -123,8 +124,8 @@ func (handle Fileset) Iterate() (key Key, ok bool) {
 	err := ErrorCode(
 		C.artio_parameter_iterate(handle.ptr, ptrName, ptrPType, ptrLength),
 	)
-	name := string(buf)
-
+	name := string(buf[:bytes.Index(buf, []byte{0})])
+	
 	return Key{name, pType, length}, err == Success
 }
 
