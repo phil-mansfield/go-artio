@@ -106,16 +106,78 @@ func FilesetOpen(prefix string, flag int, context Context) (Fileset, error)  {
 	}
 }
 
-func ParameterIterate(handle Fileset) (
-	key string, pType ParameterType, length int, err ErrorCode,
-) {
+type Key struct {
+	Name string
+	Type ParameterType
+	length int
+}
+
+func (handle Fileset) Iterate() (key Key, ok bool) {
 	buf := make([]byte, 64)
-	ptrKey := (*C.char)(unsafe.Pointer(&buf[0]))
+	ptrName := (*C.char)(unsafe.Pointer(&buf[0]))
+	pType := ParameterType(0)
 	ptrPType := (*C.int)(unsafe.Pointer(&pType))
-	ptrN := (*C.int)(unsafe.Pointer(&length))
+	length := 0
+	ptrLength := (*C.int)(unsafe.Pointer(&length))
 
-	err = ErrorCode(C.artio_parameter_iterate(handle.ptr, ptrKey, ptrPType, ptrN))
-	key = string(buf)
+	err := ErrorCode(
+		C.artio_parameter_iterate(handle.ptr, ptrName, ptrPType, ptrLength),
+	)
+	name := string(buf)
 
-	return key, pType, length, err
+	return Key{name, pType, length}, err == Success
+}
+
+// int artio_parameter_get_int_array(artio_fileset *handle, const char *key, int length,
+// int32_t *values);
+func (handle Fileset) GetString(key Key) []string {
+	panic("NYI")
+}
+
+func (handle Fileset) GetFloat(key Key) []float32 {
+	cName := C.CString(key.Name)
+	defer C.free(unsafe.Pointer(cName))
+	cLength := C.int(key.length)
+	values := make([]float32, key.length)
+	cValues := (*C.float)(unsafe.Pointer(&values[0]))
+
+	err := ErrorCode(C.artio_parameter_get_float_array(
+		handle.ptr, cName, cLength, cValues,
+	))
+
+	if err != Success {
+		panic(fmt.Errorf(
+			"There isn't a Float key '%s' in the given ARTIO file", key.Name,
+		))
+	} else {
+		return values
+	}
+}
+
+func (handle Fileset) GetDouble(key Key) []float64 {
+	cName := C.CString(key.Name)
+	defer C.free(unsafe.Pointer(cName))
+	cLength := C.int(key.length)
+	values := make([]float64, key.length)
+	cValues := (*C.double)(unsafe.Pointer(&values[0]))
+
+	err := ErrorCode(C.artio_parameter_get_double_array(
+		handle.ptr, cName, cLength, cValues,
+	))
+
+	if err != Success {
+		panic(fmt.Errorf(
+			"There isn't a Double key '%s' in the given ARTIO file", key.Name,
+		))
+	} else {
+		return values
+	}
+}
+
+func (handle Fileset) GetInt(key Key) []int64 {
+	panic("NYI")
+}
+
+func (handle Fileset) GetLong(key Key) []int64 {
+	panic("NYI")
 }
