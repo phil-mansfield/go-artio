@@ -394,7 +394,12 @@ func (handle Fileset) ReadParticle(
 	ptrID := (*C.int64_t)(unsafe.Pointer(&id))
 	ptrSubspecies := (*C.int)(unsafe.Pointer(&subspecies))
 	ptrPrimary := (*C.double)(unsafe.Pointer(&primary[0]))
-	ptrSecondary := (*C.float)(unsafe.Pointer(&secondary[0]))
+	
+	dummySecondary := float32(0)
+	ptrSecondary := (*C.float)(unsafe.Pointer(&dummySecondary))
+	if len(secondary) > 0 {
+		ptrSecondary = (*C.float)(unsafe.Pointer(&secondary[0]))
+	}
 
 	errCode := ErrorCode(C.artio_particle_read_particle(
 		handle.ptr, ptrID, ptrSubspecies, ptrPrimary, ptrSecondary,
