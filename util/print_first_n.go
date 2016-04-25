@@ -40,7 +40,7 @@ func PrintFirstN(prefix string, n int) error {
 		speciesIndices[i+1] = speciesIndices[i] + counts[i]
 	}
 
-	err = h.ParticleCacheSfcRange(0, speciesIndices[0] - 1)
+	err = h.ParticleCacheSfcRange(0, speciesIndices[1] - 1)
 	if err != nil { return err }
 	defer h.ParticleClearSfcCache()
 
