@@ -111,6 +111,14 @@ func FilesetOpen(prefix string, flag int, context Context) (Fileset, error)  {
 	}
 }
 
+func (handle Fileset) Close() error {
+	err := ErrorCode(C.artio_fileset_close(handle.ptr))
+	if err != Success {
+		return fmt.Errorf("FilesetClose error: %d", err)
+	}
+	return nil
+}
+
 type Key struct {
 	Name string
 	Type ParameterType
@@ -130,15 +138,41 @@ func (handle Fileset) Iterate() (key Key, ok bool) {
 	)
 	name := toString(buf)
 	
-	return Key{name, pType, length}, err == Success
+	return Key{ name, pType, length }, err == Success
 }
 
 func toString(buf []byte) string {
 	return string(buf[:bytes.Index(buf, []byte{0})])
 }
 
+func (handle Fileset) HasKey(name string) bool {
+	cStr := C.CString(name)
+	defer C.free(unsafe.Pointer(cStr))
+	return 1 == C.artio_parameter_has_key(handle.ptr, cStr)
+}
+
+func (handle Fileset) Key(name string) Key {
+	if !handle.HasKey(name) {
+		panic(fmt.Sprintf("Key %s not in ARTIO file.", name))
+	}
+
+	length := 0
+	pType := 0
+	lengthPtr := (*C.int)(unsafe.Pointer(&length))
+	typePtr := (*C.int)(unsafe.Pointer(&pType))
+
+	cStr := C.CString(name)
+	defer C.free(unsafe.Pointer(cStr))
+
+	C.artio_parameter_get_array_length(handle.ptr, cStr, lengthPtr)
+	C.artio_parameter_get_type(handle.ptr, cStr, typePtr)
+
+	return Key{ name, ParameterType(pType), length }
+}
 
 func (handle Fileset) GetString(key Key) []string {
+	if key.Type != String { panic("Called GetLong on non-String key.") }
+
 	cName := C.CString(key.Name)
 	defer C.free(unsafe.Pointer(cName))
 
@@ -168,6 +202,8 @@ func (handle Fileset) GetString(key Key) []string {
 }
 
 func (handle Fileset) GetFloat(key Key) []float32 {
+	if key.Type != Float { panic("Called GetLong on non-Float key.") }
+
 	cName := C.CString(key.Name)
 	defer C.free(unsafe.Pointer(cName))
 	cLength := C.int(key.length)
@@ -188,6 +224,8 @@ func (handle Fileset) GetFloat(key Key) []float32 {
 }
 
 func (handle Fileset) GetDouble(key Key) []float64 {
+	if key.Type != Double { panic("Called GetLong on non-Double key.") }
+
 	cName := C.CString(key.Name)
 	defer C.free(unsafe.Pointer(cName))
 	cLength := C.int(key.length)
@@ -208,6 +246,8 @@ func (handle Fileset) GetDouble(key Key) []float64 {
 }
 
 func (handle Fileset) GetInt(key Key) []int32 {
+	if key.Type != Long { panic("Called GetInt on non-Int key.") }
+
 	cName := C.CString(key.Name)
 	defer C.free(unsafe.Pointer(cName))
 	cLength := C.int(key.length)
@@ -228,6 +268,8 @@ func (handle Fileset) GetInt(key Key) []int32 {
 }
 
 func (handle Fileset) GetLong(key Key) []int64 {
+	if key.Type != Long { panic("Called GetLong on non-Long key.") }
+
 	cName := C.CString(key.Name)
 	defer C.free(unsafe.Pointer(cName))
 	cLength := C.int(key.length)
