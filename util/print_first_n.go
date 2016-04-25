@@ -49,6 +49,12 @@ func PrintFirstN(prefix string, n int) error {
 	if err != nil { return err }
 	defer h.ParticleClearSfcCache()
 
+	primary := make([]float64, h.GetInt(h.Key("num_primary_variables"))[0])
+	secondary := make([]float32, h.GetInt(h.Key("num_secondary_variables"))[0])
+	id, subspecies, err := h.ReadParticle(primary, secondary)
+	if err != nil { return err }
+	fmt.Println(id, subspecies)
+	fmt.Println(primary)
 	fmt.Println(counts, masses)
 
 	return nil
