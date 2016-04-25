@@ -314,3 +314,22 @@ func (handle Fileset) ParticleClearSfcCache() error {
 	return nil
 }
 
+func (handle Fileset) OpenParticles() error {
+	err := ErrorCode(C.artio_fileset_open_particles(handle.ptr))
+	if err != Success {
+		return fmt.Errorf(
+			"Could not open ARTIO particles. ErrorCode = %d", err,
+		)
+	}
+	return nil
+}
+
+func (handle Fileset) CloseParticles() error {
+	err := ErrorCode(C.artio_fileset_close_particles(handle.ptr))
+	if err != Success {
+		return fmt.Errorf(
+			"Could not close ARTIO particles. ErrorCode = %d", err,
+		)
+	}
+	return nil
+}

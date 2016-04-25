@@ -33,6 +33,7 @@ func PrintFirstN(prefix string, n int) error {
 		speciesNumKey = h.Key("num_particles_per_species")
 	}
 	counts := getIntOrLong(h, speciesNumKey)
+	fileIndices := getIntOrLong(h, h.Key("particle_file_sfc_index"))
 	masses := h.GetFloat(h.Key("particle_species_mass"))
 
 	speciesIndices := make([]int64, len(counts) + 1)
@@ -40,7 +41,11 @@ func PrintFirstN(prefix string, n int) error {
 		speciesIndices[i+1] = speciesIndices[i] + counts[i]
 	}
 
-	err = h.ParticleCacheSfcRange(0, speciesIndices[1] - 1)
+	err = h.OpenParticles()
+	if err != nil { return err }
+	defer h.CloseParticles()
+
+	err = h.ParticleCacheSfcRange(fileIndices[0], fileIndices[1] - 1)
 	if err != nil { return err }
 	defer h.ParticleClearSfcCache()
 
