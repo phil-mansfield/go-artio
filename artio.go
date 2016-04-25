@@ -174,10 +174,42 @@ func (handle Fileset) GetDouble(key Key) []float64 {
 	}
 }
 
-func (handle Fileset) GetInt(key Key) []int64 {
-	panic("NYI")
+func (handle Fileset) GetInt(key Key) []int32 {
+	cName := C.CString(key.Name)
+	defer C.free(unsafe.Pointer(cName))
+	cLength := C.int(key.length)
+	values := make([]int32, key.length)
+	cValues := (*C.int32_t)(unsafe.Pointer(&values[0]))
+
+	err := ErrorCode(C.artio_parameter_get_int_array(
+		handle.ptr, cName, cLength, cValues,
+	))
+
+	if err != Success {
+		panic(fmt.Errorf(
+			"There isn't a Int key '%s' in the given ARTIO file", key.Name,
+		))
+	} else {
+		return values
+	}
 }
 
 func (handle Fileset) GetLong(key Key) []int64 {
-	panic("NYI")
+	cName := C.CString(key.Name)
+	defer C.free(unsafe.Pointer(cName))
+	cLength := C.int(key.length)
+	values := make([]int64, key.length)
+	cValues := (*C.int64_t)(unsafe.Pointer(&values[0]))
+
+	err := ErrorCode(C.artio_parameter_get_long_array(
+		handle.ptr, cName, cLength, cValues,
+	))
+
+	if err != Success {
+		panic(fmt.Errorf(
+			"There isn't a Long key '%s' in the given ARTIO file", key.Name,
+		))
+	} else {
+		return values
+	}
 }
