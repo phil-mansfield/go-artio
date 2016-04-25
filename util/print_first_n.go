@@ -13,7 +13,7 @@ func PrintFirstN(prefix string, n int) error {
 	h, err := artio.FilesetOpen(prefix, 0, artio.NullContext)
 	if err != nil { return err }
 	defer h.Close()
-
+	
 	fmt.Println(h.GetInt(h.Key("num_particle_species")))
 
 	return nil

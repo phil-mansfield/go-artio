@@ -246,7 +246,7 @@ func (handle Fileset) GetDouble(key Key) []float64 {
 }
 
 func (handle Fileset) GetInt(key Key) []int32 {
-	if key.Type != Long { panic("Called GetInt on non-Int key.") }
+	if key.Type != Int { panic("Called GetInt on non-Int key.") }
 
 	cName := C.CString(key.Name)
 	defer C.free(unsafe.Pointer(cName))
