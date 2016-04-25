@@ -91,4 +91,6 @@ int main( int argc, char *argv[] ) {
 	}
 
 	artio_fileset_close(handle);
+
+	return 0;
 }
