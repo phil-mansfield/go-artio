@@ -83,6 +83,10 @@ const (
 	Long
 )
 
+const (
+	MaxStringLength = 256
+)
+
 
 type Context struct { ptr *C.artio_context }
 func (c Context) IsNull() bool { return c.ptr == (*C.artio_context)(nil) }
@@ -124,15 +128,43 @@ func (handle Fileset) Iterate() (key Key, ok bool) {
 	err := ErrorCode(
 		C.artio_parameter_iterate(handle.ptr, ptrName, ptrPType, ptrLength),
 	)
-	name := string(buf[:bytes.Index(buf, []byte{0})])
+	name := toString(buf)
 	
 	return Key{name, pType, length}, err == Success
 }
 
-// int artio_parameter_get_int_array(artio_fileset *handle, const char *key, int length,
-// int32_t *values);
+func toString(buf []byte) string {
+	return string(buf[:bytes.Index(buf, []byte{0})])
+}
+
+
 func (handle Fileset) GetString(key Key) []string {
-	panic("NYI")
+	cName := C.CString(key.Name)
+	defer C.free(unsafe.Pointer(cName))
+
+	bufValues := make([][]byte, key.length)
+	ptrValues := make([]*C.char, key.length)
+	for i := range bufValues {
+		bufValues[i] = make([]byte, MaxStringLength)
+		ptrValues[i] = (*C.char)(unsafe.Pointer(&bufValues[i][0]))
+	}
+
+	cLength := C.int(key.length)
+	cValues := (**C.char)(unsafe.Pointer(&ptrValues[0]))
+
+	err := ErrorCode(C.artio_parameter_get_string_array(
+		handle.ptr, cName, cLength, cValues,
+	))
+
+	if err != Success {
+		panic(fmt.Errorf(
+			"There isn't a Float key '%s' in the given ARTIO file", key.Name,
+		))
+	} else {
+		values := make([]string, key.length)
+		for i := range bufValues { values[i] = toString(bufValues[i]) }
+		return values
+	}
 }
 
 func (handle Fileset) GetFloat(key Key) []float32 {

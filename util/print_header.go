@@ -16,7 +16,7 @@ func PrintHeader(prefix string) error {
 		ff := "%36s | %6s | %.5g\n"
 		f := "%36s | %6s | %v\n"
 		switch key.Type {
-		case artio.String: fmt.Printf(f, key.Name, "String", h.GetString(key))
+		case artio.String: fmt.Printf(f,  key.Name, "String", h.GetString(key))
 		case artio.Float:  fmt.Printf(ff, key.Name, "Float",  h.GetFloat(key))
 		case artio.Double: fmt.Printf(ff, key.Name, "Double", h.GetDouble(key))
 		case artio.Int:    fmt.Printf(f,  key.Name, "Int",    h.GetInt(key))
