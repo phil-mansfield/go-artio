@@ -333,3 +333,78 @@ func (handle Fileset) CloseParticles() error {
 	}
 	return nil
 }
+
+func (handle Fileset) ParticleReadRootCellBegin(
+	sfc int64, speciesCounts []int64,
+) error {
+	intSpeciesCounts := make([]int, len(speciesCounts))
+	for i := range speciesCounts { intSpeciesCounts[i] = int(speciesCounts[i]) }
+	ptrSpeciesCounts := (*C.int)(unsafe.Pointer(&intSpeciesCounts[0]))
+
+	err := ErrorCode(C.artio_particle_read_root_cell_begin(
+			handle.ptr, C.int64_t(sfc), ptrSpeciesCounts,
+	))
+
+	if err != Success {
+		return fmt.Errorf(
+			"Could not read ARTIO particle sfc %d. ErrorCode = %d",
+			sfc, err,
+		)
+	}
+	return nil
+}
+
+func (handle Fileset) ParticleReadRootCellEnd() error {
+	err := ErrorCode(C.artio_particle_read_root_cell_end(handle.ptr))
+
+	if err != Success {
+		return fmt.Errorf(
+			"Could not complete reading ARTIO particle sfc. ErrorCode = %d",
+			err,
+		)
+	}
+	return nil
+}
+
+func (handle Fileset) ParticleReadSpeciesBegin(species int) error {
+	err := ErrorCode(C.artio_particle_read_species_begin(
+		handle.ptr, C.int(species),
+	))
+
+	if err != Success {
+		return fmt.Errorf(
+			"Could not begin to read particle species %d.", species,
+		)
+	}
+
+	return nil
+}
+
+func (handle Fileset) ParticleReadSpeciesEnd() error {
+	err := ErrorCode(C.artio_particle_read_species_end(handle.ptr))
+	if err != Success {
+		return fmt.Errorf("Could not complete reading particle species")
+	}
+	return nil
+}
+
+func (handle Fileset) ReadParticle(
+	primary []float64, secondary []float32,
+) (id, subspecies int64, err error) {
+	ptrID := (*C.int64_t)(unsafe.Pointer(&id))
+	ptrSubspecies := (*C.int)(unsafe.Pointer(&subspecies))
+	ptrPrimary := (*C.double)(unsafe.Pointer(&primary[0]))
+	ptrSecondary := (*C.float)(unsafe.Pointer(&secondary[0]))
+
+	errCode := ErrorCode(C.artio_particle_read_particle(
+		handle.ptr, ptrID, ptrSubspecies, ptrPrimary, ptrSecondary,
+	))
+
+	if errCode != Success {
+		localErr := errCode // Prevent unneccessary allocation.
+		return  0, 0, fmt.Errorf(
+			"Count not read particle. ErrorCode = %d", localErr,
+		)
+	}
+	return id, subspecies, nil
+}
