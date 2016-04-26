@@ -342,20 +342,19 @@ func (handle Fileset) CloseParticles() error {
 }
 
 func (handle Fileset) ParticleReadRootCellBegin(
-	sfc int64, speciesCounts []int64,
+	sfc int64, speciesCountBuf []int,
 ) error {
-	intSpeciesCounts := make([]int, len(speciesCounts))
-	for i := range speciesCounts { intSpeciesCounts[i] = int(speciesCounts[i]) }
-	ptrSpeciesCounts := (*C.int)(unsafe.Pointer(&intSpeciesCounts[0]))
+	ptrSpeciesCounts := (*C.int)(unsafe.Pointer(&speciesCountBuf[0]))
 
 	err := ErrorCode(C.artio_particle_read_root_cell_begin(
 			handle.ptr, C.int64_t(sfc), ptrSpeciesCounts,
 	))
 
 	if err != Success {
+		localSfc, localErr := sfc, err // GC workaround.
 		return fmt.Errorf(
 			"Could not read ARTIO particle sfc %d. ErrorCode = %d",
-			sfc, err,
+			localSfc, localErr,
 		)
 	}
 	return nil
@@ -365,9 +364,10 @@ func (handle Fileset) ParticleReadRootCellEnd() error {
 	err := ErrorCode(C.artio_particle_read_root_cell_end(handle.ptr))
 
 	if err != Success {
+		localErr := err // GC workaround.
 		return fmt.Errorf(
 			"Could not complete reading ARTIO particle sfc. ErrorCode = %d",
-			err,
+			localErr,
 		)
 	}
 	return nil
@@ -379,8 +379,10 @@ func (handle Fileset) ParticleReadSpeciesBegin(species int) error {
 	))
 
 	if err != Success {
+		localSpecies, localErr := species, err // GC workaround.
 		return fmt.Errorf(
-			"Could not begin to read particle species %d.", species,
+			"Could not begin to read particle species %d. ErrCode = %d",
+			localSpecies, localErr,
 		)
 	}
 
@@ -413,7 +415,7 @@ func (handle Fileset) ReadParticle(
 	))
 
 	if errCode != Success {
-		localErr := errCode // Prevent unneccessary allocation.
+		localErr := errCode // GC workaround.
 		return  0, 0, fmt.Errorf(
 			"Count not read particle. ErrorCode = %d", localErr,
 		)
