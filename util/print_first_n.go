@@ -45,30 +45,45 @@ func PrintFirstN(prefix string, n int) error {
 	defer h.ParticleClearSfcCache()
 
 	roots := h.GetLong(h.Key("num_root_cells"))[0]
-	numSpeciesBuf := make([]int, len(counts))
+	numSpeciesBuf := make([]int32, len(counts))
 	numParticlesRead := 0
 
-	primaryBuf := make([]float64, h.GetInt(h.Key("num_primary_variables"))[0])
-	secondaryBuf := make([]float32,
-		h.GetInt(h.Key("num_secondary_variables"))[0],
-	)
-
+	primarySizes := h.GetInt(h.Key("num_primary_variables"))
+	secondarySizes := h.GetInt(h.Key("num_secondary_variables"))
+	primaryBufs := make([][]float64, len(primarySizes))
+	for i := range primaryBufs {
+		primaryBufs[i] = make([]float64, primarySizes[i])
+	}
+	secondaryBufs := make([][]float32, len(secondarySizes))
+	for i := range secondaryBufs {
+		secondaryBufs[i] = make([]float32, secondarySizes[i])
+	}
+	
 RootLoop:
 	for root := int64(0); root < roots; root++ {
 		err = h.ParticleReadRootCellBegin(root, numSpeciesBuf)
 		if err != nil { return err }
-		h.ParticleReadSpeciesBegin(0)
-		if err != nil { return err }
-		for i := 0; i < numSpeciesBuf[0]; i++ {
-			id, _, err := h.ReadParticle(primaryBuf, secondaryBuf)
+		
+		for species := 0; species < len(numSpeciesBuf); species++ {
+			h.ParticleReadSpeciesBegin(species)
 			if err != nil { return err }
-			fmt.Printf("%d: %.3g\n", id, primaryBuf)
-			numParticlesRead++
-			if numParticlesRead == n { break RootLoop }
-		}
-		err = h.ParticleReadSpeciesEnd()
-		if err != nil { return err }
 
+			for i := int32(0); i < numSpeciesBuf[species]; i++ {
+				id, _, err := h.ReadParticle(
+					primaryBufs[species], secondaryBufs[species],
+				)
+				if err != nil { return err }
+				fmt.Printf("%10d: X: %8.3g V: %9.3g\n", id,
+					primaryBufs[species][:3],
+					primaryBufs[species][3:6])
+				numParticlesRead++
+				if numParticlesRead == n { break RootLoop }
+			}
+
+			err = h.ParticleReadSpeciesEnd()
+			if err != nil { return err }
+		}
+		
 		err = h.ParticleReadRootCellEnd()
 		if err != nil { return err }
 	}

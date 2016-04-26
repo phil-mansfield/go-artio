@@ -354,7 +354,7 @@ func (handle Fileset) CloseParticles() error {
 }
 
 func (handle Fileset) ParticleReadRootCellBegin(
-	sfc int64, speciesCountBuf []int,
+	sfc int64, speciesCountBuf []int32,
 ) error {
 	ptrSpeciesCounts := (*C.int)(unsafe.Pointer(&speciesCountBuf[0]))
 	err := ErrorCode(C.artio_particle_read_root_cell_begin(
