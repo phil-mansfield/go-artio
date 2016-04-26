@@ -521,4 +521,11 @@ int artio_selection_iterator( artio_selection *selection,
 int artio_selection_iterator_reset( artio_selection *selection );
 int64_t artio_selection_size( artio_selection *selection );
 
+/* CGo Callbacks */
+
+int CountCallback(
+	int64_t sfc_index, int species, int subspecies, int64_t pid,
+	double *primary_variables, float *secondary_variables, void *params
+);
+
 #endif /* __ARTIO_H__ */

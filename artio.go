@@ -9,17 +9,6 @@ package artio
 #include <limits.h>
 #include <stdint.h>
 #include "artio.h"
-
-// `count_callback` counts the number of particles of each type in a range.
-// `params` is a zeroed int64_t array that output will be written to.
-static inline int CountCallback(
-	int64_t sfc_index, int species, int subspecies, int64_t pid,
-	double *primary_variables, float *secondary_variables, void *params
-) {
-	int64_t *counts = (int64_t *) params;
-	counts[species]++;
-	return 0;
-}
 */
 import "C"
 
@@ -403,7 +392,7 @@ func (handle Fileset) ParticleReadSpeciesBegin(species int) error {
 func (handle Fileset) ParticleReadSpeciesEnd() error {
 	err := ErrorCode(C.artio_particle_read_species_end(handle.ptr))
 	if err != Success {
-		return fmt.Errorf("Could not complete reading particle species")
+		return fmt.Errorf("Could not complete reading ARTIO particle species")
 	}
 	return nil
 }
@@ -427,9 +416,30 @@ func (handle Fileset) ReadParticle(
 
 	if errCode != Success {
 		localErr := errCode // GC workaround.
+		// If you get this error, it might be an int64 vs. int32 issue.
 		return  0, 0, fmt.Errorf(
-			"Count not read particle. ErrorCode = %d", localErr,
+			"Count not read ARTIO particle. ErrorCode = %d", localErr,
 		)
 	}
 	return id, subspecies, nil
+}
+
+func (h Fileset) CountInRange(start, end int64) ([]int64, error) {
+	// This needs to be done with C callbacks for performance reasons.
+	counts := make([]int64, h.GetInt(h.Key("num_particle_species"))[0])
+	ptrCounts := unsafe.Pointer(&counts[0])
+
+	errCode := ErrorCode(C.artio_particle_read_sfc_range(
+		h.ptr, C.int64_t(start), C.int64_t(end),
+		(C.artio_particle_callback)(C.CountCallback), ptrCounts,
+	))
+
+	if errCode != Success {
+		return nil, fmt.Errorf(
+			"Could not read the sfc range (%d, %d). Error Code: %d",
+			start, end, errCode,
+		)
+	}
+
+	return counts, nil
 }
