@@ -55,18 +55,22 @@ func PrintFirstN(prefix string, n int) error {
 
 RootLoop:
 	for root := int64(0); root < roots; root++ {
-		h.ParticleReadRootCellBegin(root, numSpeciesBuf)
-
+		err = h.ParticleReadRootCellBegin(root, numSpeciesBuf)
+		if err != nil { return err }
 		h.ParticleReadSpeciesBegin(0)
+		if err != nil { return err }
 		for i := 0; i < numSpeciesBuf[0]; i++ {
-			h.ReadParticle(primaryBuf, secondaryBuf)
-			fmt.Printf("%.3g\n", primaryBuf)
+			id, _, err := h.ReadParticle(primaryBuf, secondaryBuf)
+			if err != nil { return err }
+			fmt.Printf("%d: %.3g\n", id, primaryBuf)
 			numParticlesRead++
 			if numParticlesRead == n { break RootLoop }
 		}
-		h.ParticleReadSpeciesEnd()
+		err = h.ParticleReadSpeciesEnd()
+		if err != nil { return err }
 
-		h.ParticleReadRootCellEnd()
+		err = h.ParticleReadRootCellEnd()
+		if err != nil { return err }
 	}
 
 	fmt.Println(masses)
