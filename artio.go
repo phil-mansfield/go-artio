@@ -436,10 +436,34 @@ func (h Fileset) CountInRange(start, end int64) ([]int64, error) {
 
 	if errCode != Success {
 		return nil, fmt.Errorf(
-			"Could not read the sfc range (%d, %d). Error Code: %d",
-			start, end, errCode,
+			"Could not count the ARTIO particles in the sfc range (%d, %d). " +
+			"Error Code: %d", start, end, errCode,
 		)
 	}
 
 	return counts, nil
+}
+
+func (h Fileset) GetPositionsInRange(start, end int64, buf [][3]float32) error {
+	// This needs to be done with C callbacks for performance reasons.
+
+	pBuf := C.PositionBuffer{}
+	pBuf.i = 0
+	pBuf.n = C.int64_t(len(buf))
+	pBuf.buf = (*C.Vector)(unsafe.Pointer(&buf[0]))
+	ptrPBuf := unsafe.Pointer(&pBuf)
+
+	errCode := ErrorCode(C.artio_particle_read_sfc_range(
+		h.ptr, C.int64_t(start), C.int64_t(end),
+		(C.artio_particle_callback)(C.GetPositionsCallback), ptrPBuf,
+	))
+
+	if errCode != Success {
+		return fmt.Errorf(
+			"Could not get the ARTIO positions in the sfc range (%d, %d)." +
+			"Error Code: %d", start, end, errCode,
+		)
+	}
+
+	return nil
 }

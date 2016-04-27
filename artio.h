@@ -523,9 +523,28 @@ int64_t artio_selection_size( artio_selection *selection );
 
 /* CGo Callbacks */
 
+/* `CountCallback` counts the number of particles of each species in a range.
+ * `params` is a zeroed int64_t array that output will be written to. */
 int CountCallback(
 	int64_t sfc_index, int species, int subspecies, int64_t pid,
 	double *primary_variables, float *secondary_variables, void *params
 );
+
+/* `GetPositionsCallback` reads the positions in a range to a buffer.
+ * `params` is a pointer to a PositionBuffer struct. */
+int GetPositionsCallback(
+    int64_t sfx_idx, int species, int subspecies, int64_t pid,
+    double *primary_variables, float *secondary_variables, void *params
+);
+
+/* `Vector` is only defined to make CGo casts easier. */
+typedef float Vector[3];
+
+/* `PositionBuffer` is a helper type for `WritePositionsCallback` which
+ * contains the output buffer and also allows for bounds checking. */
+typedef struct PositionBuffer {
+    Vector *buf;
+    int64_t n, i;
+} PositionBuffer;
 
 #endif /* __ARTIO_H__ */
