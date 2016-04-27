@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <artio.h>
+#include <stdio.h>
 
 /* `CountCallback` counts the number of particles of each species in a range.
  * `params` is a zeroed int64_t array that output will be written to. */
@@ -27,10 +28,11 @@ int GetPositionsCallback(
     i = pBuf->i;
     if (i >= pBuf->n) { return ARTIO_ERR_INVALID_SFC_RANGE; }
 
-    i++;
     pBuf->buf[i][0] = primary_variables[0];
     pBuf->buf[i][1] = primary_variables[1];
     pBuf->buf[i][2] = primary_variables[2];
-
+	
+    pBuf->i++;
+	
     return 0;
 }

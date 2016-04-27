@@ -58,9 +58,10 @@ func PrintFirstN(prefix string, n int) error {
 	for i := range secondaryBufs {
 		secondaryBufs[i] = make([]float32, secondarySizes[i])
 	}
-	
+
+	var root int64
 RootLoop:
-	for root := int64(0); root < roots; root++ {
+	for root = 0; root < roots; root++ {
 		err = h.ParticleReadRootCellBegin(root, numSpeciesBuf)
 		if err != nil { return err }
 		
@@ -89,7 +90,15 @@ RootLoop:
 	}
 
 	fmt.Println(masses)
+	ns, err := h.CountInRange(0, root)
+	if err != nil { return err }
+	buf := make([][3]float32, ns[0] + ns[1])
+	buf := make([][3]float32, 5)
+	err = h.GetPositionsInRange(0, root, buf)
+	if err != nil { return err }
 
+	fmt.Println(buf)
+	
 	return nil
 }
 
