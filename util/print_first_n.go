@@ -92,9 +92,8 @@ RootLoop:
 	fmt.Println(masses)
 	ns, err := h.CountInRange(0, root)
 	if err != nil { return err }
-	buf := make([][3]float32, ns[0] + ns[1])
-	buf := make([][3]float32, 5)
-	err = h.GetPositionsInRange(0, root, buf)
+	buf := make([][3]float32, ns[0])
+	err = h.GetPositionsAt(0, 0, root, buf)
 	if err != nil { return err }
 
 	fmt.Println(buf)

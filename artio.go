@@ -424,27 +424,29 @@ func (handle Fileset) ReadParticle(
 	return id, subspecies, nil
 }
 
-func (h Fileset) CountInRange(start, end int64) ([]int64, error) {
+func (h Fileset) CountInRange(sfcStart, sfcEnd int64) ([]int64, error) {
 	// This needs to be done with C callbacks for performance reasons.
 	counts := make([]int64, h.GetInt(h.Key("num_particle_species"))[0])
 	ptrCounts := unsafe.Pointer(&counts[0])
 
 	errCode := ErrorCode(C.artio_particle_read_sfc_range(
-		h.ptr, C.int64_t(start), C.int64_t(end),
+		h.ptr, C.int64_t(sfcStart), C.int64_t(sfcEnd),
 		(C.artio_particle_callback)(C.CountCallback), ptrCounts,
 	))
 
 	if errCode != Success {
 		return nil, fmt.Errorf(
 			"Could not count the ARTIO particles in the sfc range (%d, %d). " +
-			"Error Code: %d", start, end, errCode,
+			"Error Code: %d", sfcStart, sfcEnd, errCode,
 		)
 	}
 
 	return counts, nil
 }
 
-func (h Fileset) GetPositionsInRange(start, end int64, buf [][3]float32) error {
+func (h Fileset) GetPositionsAt(
+	species int, sfcStart, sfcEnd int64, buf [][3]float32,
+) error {
 	// This needs to be done with C callbacks for performance reasons.
 
 	pBuf := C.PositionBuffer{}
@@ -453,17 +455,28 @@ func (h Fileset) GetPositionsInRange(start, end int64, buf [][3]float32) error {
 	pBuf.buf = (*C.Vector)(unsafe.Pointer(&buf[0]))
 	ptrPBuf := unsafe.Pointer(&pBuf)
 
-	errCode := ErrorCode(C.artio_particle_read_sfc_range(
-		h.ptr, C.int64_t(start), C.int64_t(end),
+	errCode := ErrorCode(C.artio_particle_read_sfc_range_species(
+		h.ptr, C.int64_t(sfcStart), C.int64_t(sfcEnd),
+		C.int(species), C.int(species),
 		(C.artio_particle_callback)(C.GetPositionsCallback), ptrPBuf,
 	))
 
 	if errCode != Success {
 		return fmt.Errorf(
 			"Could not get the ARTIO positions in the sfc range (%d, %d)." +
-			"Error Code: %d", start, end, errCode,
+			"Error Code: %d", sfcStart, sfcEnd, errCode,
 		)
 	}
 
 	return nil
+}
+
+func (h Fileset) GetPositions(
+	species int, sfcStart, sfcEnd int64,
+) ([][3]float32, error) {
+	counts, err := h.CountInRange(sfcStart, sfcEnd)
+	if err != nil { return nil, err }
+	buf := make([][3]float32, counts[species])
+	err = h.GetPositionsAt(species, sfcStart, sfcEnd, buf)
+	return buf, err
 }
