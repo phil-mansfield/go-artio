@@ -113,7 +113,7 @@ func FilesetOpen(prefix string, flag OpenType, context Context) (Fileset, error)
 	}
 
 	if handle.IsNull() {
-		return handle, fmt.Errorf("Prefix %s does not exist", prefix)
+		return handle, fmt.Errorf("ARTIO prefix %s does not exist.", prefix)
 	} else {
 		return handle, nil
 	}
@@ -122,7 +122,7 @@ func FilesetOpen(prefix string, flag OpenType, context Context) (Fileset, error)
 func (handle Fileset) Close() error {
 	err := ErrorCode(C.artio_fileset_close(handle.ptr))
 	if err != Success {
-		return fmt.Errorf("Could not close ARTIO fileset. ErrorCode:: %d", err)
+		return fmt.Errorf("Could not close ARTIO fileset. ErrorCode: %d", err)
 	}
 	return nil
 }
