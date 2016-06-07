@@ -9,6 +9,39 @@ package artio
 #include <limits.h>
 #include <stdint.h>
 #include "artio.h"
+
+int64_t GetPositionsCallbackN;
+int64_t GetPositionsCallbackI;
+
+int CountCallback(
+	int64_t sfc_index, int species, int subspecies, int64_t pid,
+	double *primary_variables, float *secondary_variables, void *params
+) {
+	int64_t *counts = (int64_t *) params;
+	counts[species]++;
+	return 0;
+}
+
+int GetPositionsCallback(
+    int64_t sfx_idx, int species, int subspecies, int64_t pid,
+    double *primary_variables, float *secondary_variables, void *params
+) {
+    int64_t i, n;
+	Vector *buf;
+
+    buf = (Vector*) params;
+    i = GetPositionsCallbackI;
+	n = GetPositionsCallbackN;
+    if (i >= n) { return ARTIO_ERR_INVALID_SFC_RANGE; }
+
+    buf[i][0] = primary_variables[0];
+    buf[i][1] = primary_variables[1];
+    buf[i][2] = primary_variables[2];
+	
+    GetPositionsCallbackI++;
+	
+    return 0;
+}
 */
 import "C"
 
@@ -187,8 +220,8 @@ func (handle Fileset) GetString(key Key) []string {
 	bufValues := make([][]byte, key.length)
 	ptrValues := make([]*C.char, key.length)
 	for i := range bufValues {
-		bufValues[i] = make([]byte, MaxStringLength)
-		ptrValues[i] = (*C.char)(unsafe.Pointer(&bufValues[i][0]))
+		ptrValues[i] = (*C.char)(C.malloc(MaxStringLength))
+		defer C.free(unsafe.Pointer(ptrValues[i]))
 	}
 
 	cLength := C.int(key.length)
@@ -204,7 +237,9 @@ func (handle Fileset) GetString(key Key) []string {
 		))
 	} else {
 		values := make([]string, key.length)
-		for i := range bufValues { values[i] = toString(bufValues[i]) }
+		for i := range bufValues {
+			values[i] = C.GoString(ptrValues[i])
+		}
 		return values
 	}
 }
@@ -448,17 +483,17 @@ func (h Fileset) GetPositionsAt(
 	species int, sfcStart, sfcEnd int64, buf [][3]float32,
 ) error {
 	// This needs to be done with C callbacks for performance reasons.
-
-	pBuf := C.PositionBuffer{}
-	pBuf.i = 0
-	pBuf.n = C.int64_t(len(buf))
-	pBuf.buf = (*C.Vector)(unsafe.Pointer(&buf[0]))
-	ptrPBuf := unsafe.Pointer(&pBuf)
+	// Furthermore, the global variables and locks are due to Go 1.6's
+	// new and terrible pointer passing rules.
+	
+	C.GetPositionsCallbackI = 0
+	C.GetPositionsCallbackN = C.int64_t(len(buf))
 
 	errCode := ErrorCode(C.artio_particle_read_sfc_range_species(
 		h.ptr, C.int64_t(sfcStart), C.int64_t(sfcEnd),
 		C.int(species), C.int(species),
-		(C.artio_particle_callback)(C.GetPositionsCallback), ptrPBuf,
+		(C.artio_particle_callback)(C.GetPositionsCallback),
+		unsafe.Pointer(&buf[0]),
 	))
 
 	if errCode != Success {
