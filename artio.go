@@ -482,6 +482,10 @@ func (h Fileset) CountInRange(sfcStart, sfcEnd int64) ([]int64, error) {
 func (h Fileset) GetPositionsAt(
 	species int, sfcStart, sfcEnd int64, buf [][3]float32,
 ) error {
+	if len(buf) == 0 {
+		return nil
+	}
+
 	// This needs to be done with C callbacks for performance reasons.
 	// Furthermore, the global variables and locks are due to Go 1.6's
 	// new and terrible pointer passing rules.
