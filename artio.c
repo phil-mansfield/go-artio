@@ -45,7 +45,7 @@ int artio_fileset_set_buffer_size( int buffer_size ) {
 
 artio_fileset *artio_fileset_open(char * file_prefix, int type, const artio_context *context) {
 	artio_fh *head_fh;
-	char filename[256];
+	char filename[512];
 	int ret;
 	int64_t tmp;
 	int artio_major, artio_minor;
@@ -56,11 +56,13 @@ artio_fileset *artio_fileset_open(char * file_prefix, int type, const artio_cont
 		return NULL;
 	}
 
+	//filename = (char*)malloc(512);
 	/* open header file */
 	sprintf(filename, "%s.art", handle->file_prefix);
 	head_fh = artio_file_fopen(filename,
 			ARTIO_MODE_READ | ARTIO_MODE_ACCESS, context);
-
+	//free(filename);
+	
 	if ( head_fh == NULL ) {
 		artio_fileset_destroy(handle);
 		return NULL;
@@ -213,7 +215,7 @@ artio_fileset *artio_fileset_create(char * file_prefix,
 }
 
 int artio_fileset_close(artio_fileset *handle) {
-	char header_filename[256];
+	char header_filename[512];
 	artio_fh *head_fh;
 
 	if ( handle == NULL ) {

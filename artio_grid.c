@@ -45,7 +45,7 @@ const double oct_pos_offsets[8][3] = {
  */
 int artio_fileset_open_grid(artio_fileset *handle) {
 	int i;
-	char filename[256];
+	char filename[512];
 	int first_file, last_file;
 	int mode;
 	artio_grid_file *ghandle;
@@ -121,7 +121,7 @@ int artio_fileset_open_grid(artio_fileset *handle) {
 
 	/* open files on all processes */
 	for (i = 0; i < ghandle->num_grid_files; i++) {
-		sprintf(filename, "%s.%c%03d", handle->file_prefix, 
+	  sprintf(filename, "%s.%c%03d", handle->file_prefix, 
 				grid_file_suffix, i);
 
 		mode = ARTIO_MODE_READ;

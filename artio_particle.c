@@ -38,7 +38,7 @@ void artio_particle_file_destroy( artio_particle_file *phandle );
  */
 int artio_fileset_open_particles(artio_fileset *handle) {
 	int i;
-	char filename[256];
+	char filename[512];
 	int first_file, last_file;
 	int mode;
 	artio_particle_file *phandle;
